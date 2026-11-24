@@ -1,8 +1,9 @@
 # MALQ_DASHBOARD
 
 Panel personal de ventas: Streamlit + SQLite. Consulta la base de datos de prueba
-`data/test.db` y muestra ingresos, evolución mensual, productos más vendidos y
-reparto por categoría, con filtros por categoría y tienda.
+`data/test.db` y muestra ingresos, evolución mensual, productos más vendidos,
+reparto por categoría y las consultas de la tarea del 6/11, con filtros por
+categoría y tienda.
 
 ## Arrancar
 

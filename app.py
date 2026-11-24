@@ -89,6 +89,40 @@ ORDER BY ingresos DESC
 """
 )
 
+# --- consultas de la tarea del 6/11/2025 (clase) ----------------------------
+
+# Tarea nº 7: total de ventas por tienda
+SQL_TIENDAS = (
+    VISTA
+    + """
+SELECT tienda, ciudad, COUNT(*) AS ventas,
+       SUM(quantity) AS unidades, SUM(quantity * price) AS ingresos
+FROM v {filtro}
+GROUP BY tienda, ciudad
+ORDER BY ingresos DESC
+"""
+)
+
+# Tarea nº 8: productos con más de N unidades vendidas (HAVING)
+SQL_MIN_UNIDADES = (
+    VISTA
+    + """
+SELECT producto, SUM(quantity) AS unidades
+FROM v {filtro}
+GROUP BY producto
+HAVING SUM(quantity) > ?
+ORDER BY unidades DESC
+"""
+)
+
+# Tarea nº 2: productos de una categoría, ordenados alfabéticamente
+SQL_CATALOGO = """
+SELECT product_id, product_name, category
+FROM products_uuid
+WHERE category = ?
+ORDER BY product_name
+"""
+
 if not DB.exists():
     st.error(f"No encuentro la base de datos en {DB}. Añádela a la carpeta data/.")
     st.stop()
@@ -188,7 +222,7 @@ with izq:
     st.dataframe(
         productos,
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
         column_config={
             "ingresos": st.column_config.NumberColumn("Ingresos", format="euro"),
             "unidades": st.column_config.NumberColumn("Unidades", format="%d"),
@@ -201,12 +235,64 @@ with der:
     st.dataframe(
         categorias_df,
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
         column_config={
             "ingresos": st.column_config.NumberColumn("Ingresos", format="euro"),
             "ventas": st.column_config.NumberColumn("Ventas", format="%d"),
         },
     )
+
+# --- consultas de clase (tarea 6/11/2025) ----------------------------------
+
+st.subheader("Consultas de clase")
+st.caption("Tomadas de `tarea_6-11-2025.sql`, aplicadas aquí a la misma base de datos.")
+
+vista = st.segmented_control(
+    "Consulta de la tarea",
+    ["Ventas por tienda", "Más de N unidades", "Catálogo por categoría"],
+    default="Ventas por tienda",
+    label_visibility="collapsed",
+)
+vista = vista or "Ventas por tienda"
+
+if vista == "Ventas por tienda":
+    tiendas_df = consultar(SQL_TIENDAS.format(filtro=filtro), params)
+    st.dataframe(
+        tiendas_df,
+        hide_index=True,
+        width="stretch",
+        column_config={
+            "ingresos": st.column_config.NumberColumn("Ingresos", format="euro"),
+            "unidades": st.column_config.NumberColumn("Unidades", format="%d"),
+            "ventas": st.column_config.NumberColumn("Ventas", format="%d"),
+        },
+    )
+
+elif vista == "Más de N unidades":
+    minimo = st.slider("Unidades vendidas como mínimo", 1, 100, 10, step=1)
+    unidades_df = consultar(
+        SQL_MIN_UNIDADES.format(filtro=filtro), (*valores, minimo)
+    )
+    if unidades_df.empty:
+        st.info(f"Ningún producto llega a {minimo} unidades con los filtros actuales.")
+    else:
+        st.dataframe(
+            unidades_df,
+            hide_index=True,
+            width="stretch",
+            column_config={"unidades": st.column_config.NumberColumn("Unidades", format="%d")},
+        )
+        st.caption(f"{len(unidades_df)} productos con más de {minimo} unidades (agrupado por nombre).")
+
+else:
+    por_defecto = categorias.index("Snacks") if "Snacks" in categorias else 0
+    cat_sel = st.selectbox("Categoría", categorias, index=por_defecto)
+    st.dataframe(
+        consultar(SQL_CATALOGO, (cat_sel,)),
+        hide_index=True,
+        width="stretch",
+    )
+    st.caption("Catálogo completo de la categoría: no le afectan los filtros de la barra lateral.")
 
 # --- las consultas, a la vista ---------------------------------------------
 
@@ -217,5 +303,11 @@ with st.expander("Ver las consultas SQL"):
     st.code(SQL_MENSUAL.format(cond=(" AND ".join(condiciones) or "1=1")).strip(), language="sql")
     st.markdown("**Top productos**")
     st.code(SQL_PRODUCTOS.format(filtro=filtro).strip(), language="sql")
+    st.markdown("**Tarea nº 7 — ventas por tienda**")
+    st.code(SQL_TIENDAS.format(filtro=filtro).strip(), language="sql")
+    st.markdown("**Tarea nº 8 — más de N unidades (HAVING)**")
+    st.code(SQL_MIN_UNIDADES.format(filtro=filtro).strip(), language="sql")
+    st.markdown("**Tarea nº 2 — catálogo por categoría**")
+    st.code(SQL_CATALOGO.strip(), language="sql")
     if params:
         st.caption(f"Parámetros aplicados: {params}")
