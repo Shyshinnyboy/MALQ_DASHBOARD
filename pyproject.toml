@@ -7,7 +7,9 @@ authors = [
     { name = "manuel landeira", email = "manuelandeira2000@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "streamlit>=1.67.0",
+]
 
 [project.scripts]
 malq-dashboard = "malq_dashboard:main"
