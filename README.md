@@ -26,3 +26,27 @@ uv.lock           versiones exactas de las dependencias
 ```bash
 uv add <paquete>
 ```
+
+## Ramas: `main` y `dev`
+
+- `main` → versión buena (lo que se enseña o se publica).
+- `dev` → donde se trabaja el día a día.
+
+Trabajo diario, en `dev`:
+
+```bash
+git checkout dev
+git add .
+git commit -m "lo que hayas cambiado"
+git push
+```
+
+Pasar lo de `dev` a `main` cuando funcione:
+
+```bash
+git checkout main
+git pull
+git merge dev
+git push
+git checkout dev   # volver a trabajar
+```
