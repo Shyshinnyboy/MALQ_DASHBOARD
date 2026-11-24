@@ -11,3 +11,7 @@ wheels/
 
 # macOS
 .DS_Store
+
+# Enlaces que crea Streamlit para agentes (apuntan a .venv)
+.agents/
+.claude/
